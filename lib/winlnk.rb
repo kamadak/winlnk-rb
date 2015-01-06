@@ -68,45 +68,47 @@ class WinLnk
 
   def initialize(pathname, codepage)
     @codepage = codepage
-    data = open(pathname, "rb:ASCII-8BIT") { |f| f.read }
-    off = read_header(data)
+    @data = open(pathname, "rb:ASCII-8BIT") { |f| f.read }
+    off = read_header()
     printf("Link flags: %b\n", @flags) if @@debug
 
     if @flags & FLAG_HAS_LINK_TARGET_ID_LIST != 0
-      off = read_id_list(data, off)
+      off = read_id_list(off)
     end
 
     if @flags & FLAG_HAS_LINK_INFO != 0
-      off = read_link_info(data, off)
+      off = read_link_info(off)
     end
 
     if @flags & FLAG_HAS_NAME != 0
-      @description, off = read_string(data, off)
+      @description, off = read_string(off)
     end
     if @flags & FLAG_HAS_RELATIVE_PATH != 0
-      @relative_path, off = read_string(data, off)
+      @relative_path, off = read_string(off)
     end
     if @flags & FLAG_HAS_WORKING_DIR != 0
-      @working_directory, off = read_string(data, off)
+      @working_directory, off = read_string(off)
     end
     if @flags & FLAG_HAS_ARGUMENTS != 0
-      @arguments, off = read_string(data, off)
+      @arguments, off = read_string(off)
     end
     if @flags & FLAG_HAS_ICON_LOCATION != 0
-      @icon_location, off = read_string(data, off)
+      @icon_location, off = read_string(off)
     end
+
+    remove_instance_variable(:@data)
   end
 
-  def read_header(data)
-    raise TypeError.new("Not a shortcut") if data[0x00, 4] != MAGIC
-    raise TypeError.new("CLSID mismatch") if data[0x04, 16] != CLSID
-    @flags, @attributes = data[0x14, 8].unpack("V2")
-    times = data[0x1c, 24].unpack("V6")
+  def read_header()
+    raise ParseError.new("Not a shell link file") if data(0x00, 4) != MAGIC
+    raise ParseError.new("CLSID mismatch") if data(0x04, 16) != CLSID
+    @flags, @attributes = data(0x14, 8).unpack("V2")
+    times = data(0x1c, 24).unpack("V6")
     @btime = filetime2posixtime(times[1] << 32 | times[0])
     @atime = filetime2posixtime(times[3] << 32 | times[2])
     @mtime = filetime2posixtime(times[5] << 32 | times[4])
-    @file_size, @icon_index, @show_cmd, @hot_key = data[0x34, 16].unpack("V3v")
-    reserved = data[0x44, 8].unpack("vV2")
+    @file_size, @icon_index, @show_cmd, @hot_key = data(0x34, 16).unpack("V3v")
+    reserved = data(0x44, 8).unpack("vV2")
     return 0x4c
   end
 
@@ -116,52 +118,66 @@ class WinLnk
     return Time.at(filetime / 10000000, filetime % 10000000 / 10)
   end
 
-  def read_id_list(data, off)
+  def read_id_list(off)
     @id_list = []
-    len, = data[off, 2].unpack("v")
+    len, = data(off, 2).unpack("v")
     off += 2
     nextoff = off + len
     loop do
-      itemlen, = data[off, 2].unpack("v")
+      itemlen, = data(off, 2).unpack("v")
       return nextoff if itemlen == 0
-      @id_list.push(data[off + 2, itemlen - 2])
+      @id_list.push(data(off + 2, itemlen - 2))
       off += itemlen
     end
   end
 
-  def read_link_info(data, off)
-    len, = data[off, 4].unpack("V")
+  def read_link_info(off)
+    len, = data(off, 4).unpack("V")
+    raise ParseError.new("Too short LinkInfo") if len < 0x1c
     header_len, li_flags, vol_id_off, base_path_off,
-      net_rel_link_off, suffix_off = data[off + 4, 24].unpack("V6")
+      net_rel_link_off, suffix_off = data(off + 4, 24).unpack("V6")
     if @@debug
       printf("LinkInfo header size: %u\n", header_len)
       printf("LinkInfo flags: %b\n", li_flags)
     end
 
     if li_flags & LI_FLAG_LOCAL != 0
-      base_path, = data[off + base_path_off .. -1].unpack("Z*")
-      suffix, = data[off + suffix_off .. -1].unpack("Z*")
+      base_path, = data_all(off + base_path_off).unpack("Z*")
+      suffix, = data_all(off + suffix_off).unpack("Z*")
       @path = (base_path + suffix).force_encoding(@codepage)
     end
     if li_flags & LI_FLAG_NETWORK != 0
       # Parse the CommonNetworkRelativeLink structure.
-      net_name_off, = data[off + net_rel_link_off + 8, 2].unpack("v")
-      net_name, = data[off + net_rel_link_off + net_name_off .. -1].unpack("Z*")
-      suffix, = data[off + suffix_off .. -1].unpack("Z*")
+      net_name_off, = data(off + net_rel_link_off + 8, 2).unpack("v")
+      net_name, = data_all(off + net_rel_link_off + net_name_off).unpack("Z*")
+      suffix, = data_all(off + suffix_off).unpack("Z*")
       @path = (net_name + "\\" + suffix).force_encoding(@codepage)
     end
     return off + len
   end
 
-  def read_string(data, off)
-    len, = data[off, 2].unpack("v")
+  def read_string(off)
+    len, = data(off, 2).unpack("v")
     if @flags & FLAG_IS_UNICODE != 0
       # UTF-16.
       len *= 2
-      return data[off + 2, len].force_encoding("UTF-16LE"), off + len + 2
+      return data(off + 2, len).force_encoding("UTF-16LE"), off + len + 2
     else
       # The system default code page.
-      return data[off + 2, len].force_encoding(@codepage), off + len + 2
+      return data(off + 2, len).force_encoding(@codepage), off + len + 2
     end
+  end
+
+  def data(off, len)
+    raise ParseError.new("Truncated file") if @data.size < off + len
+    return @data[off, len]
+  end
+
+  def data_all(off)
+    raise ParseError.new("Truncated file") if @data.size < off
+    return @data[off..-1]
+  end
+
+  class ParseError < StandardError
   end
 end
