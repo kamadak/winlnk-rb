@@ -13,7 +13,9 @@ EOS
 
   s.files = [
     "README",
+    "Rakefile",
     "lib/winlnk.rb",
+    "test/test_error.rb",
   ]
   s.require_paths = ["lib"]
 end
