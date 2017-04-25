@@ -1,2 +1,26 @@
 Library to read Windows Shell Link (shortcut or .lnk) files
 -----------------------------------------------------------
+
+   This is a library to parse Windows Shell Link (shortcut or .lnk) files
+   on non-Windows systems.
+
+Installation
+------------
+
+   With Gem:
+
+      # gem install winlnk
+
+   From the source:
+
+      % rake test
+
+      Copy the contents of the lib directory into somewhere you like.
+
+Usage
+-----
+
+   To read the link target, create an instance and get its path attribute.
+
+      link = WinLnk.new("path/to/link.lnk")
+      p link.path

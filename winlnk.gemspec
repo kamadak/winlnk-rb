@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
   s.version = "0.0.1"
   s.authors = ["KAMADA Ken'ichi"]
   s.email = "kamada@nanohz.org"
-  #s.homepage = ""
+  s.homepage = "https://github.com/kamadak/winlnk-rb"
   s.licenses = ["BSD-2-Clause"]
   s.summary = "Library to read Windows Shell Link (shortcut or .lnk) files"
   s.description = <<EOS

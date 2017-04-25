@@ -62,10 +62,25 @@ class WinLnk
 
   @@debug = nil
 
-  attr_reader :flags, :path,
-    :description, :relative_path, :working_directory,
-    :arguments, :icon_location
+  # Returns the LinkFlags of the link.
+  attr_reader :flags
+  # Returns the path pointed to by the link.
+  attr_reader :path
+  # Returns the description of the link.
+  attr_reader :description
+  # Returns the path of the link target relative to the link.
+  attr_reader :relative_path
+  # Returns the working directory used when activating the link target.
+  attr_reader :working_directory
+  # Returns the command-line arguments specified when activating
+  # the link target.
+  attr_reader :arguments
+  # Returns the location of the icon.
+  attr_reader :icon_location
 
+  # Parses a shell link file given by +pathname+ and returns
+  # a +WinLnk+ object.  The encoding of non-Unicode strings is assumed
+  # to be +codepage+.
   def initialize(pathname, codepage)
     @codepage = codepage
     @data = open(pathname, "rb:ASCII-8BIT") { |f| f.read }
@@ -180,6 +195,7 @@ class WinLnk
     return @data[off..-1]
   end
 
+  # This exception is raised when failed to parse a link.
   class ParseError < StandardError
   end
 end
