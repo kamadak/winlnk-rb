@@ -99,6 +99,8 @@ class WinLnk
     remove_instance_variable(:@data)
   end
 
+  private
+
   def read_header()
     raise ParseError.new("Not a shell link file") if data(0x00, 4) != MAGIC
     raise ParseError.new("CLSID mismatch") if data(0x04, 16) != CLSID
