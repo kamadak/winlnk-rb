@@ -178,7 +178,7 @@ class WinLnk
     if @flags & FLAG_IS_UNICODE != 0
       # UTF-16.
       len *= 2
-      return data(off + 2, len).force_encoding("UTF-16LE"), off + len + 2
+      return data(off + 2, len).encode("UTF-8", "UTF-16LE"), off + len + 2
     else
       # The system default code page.
       return data(off + 2, len).force_encoding(@codepage), off + len + 2
