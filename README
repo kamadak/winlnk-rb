@@ -22,5 +22,5 @@ Usage
 
    To read the link target, create an instance and get its path attribute.
 
-      link = WinLnk.new("path/to/link.lnk")
+      link = WinLnk.new("path/to/link.lnk", "the ANSI code page")
       p link.path
