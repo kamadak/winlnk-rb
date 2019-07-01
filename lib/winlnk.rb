@@ -130,6 +130,8 @@ class WinLnk
   end
 
   def filetime2posixtime(filetime)
+    # If the value is 0, the time is not set.
+    return nil if filetime == 0
     # Windows FILETIME is the time from 1601-01-01 in 100-nanosecond unit.
     filetime -= 116444736000000000
     return Time.at(filetime / 10000000, filetime % 10000000 / 10)
