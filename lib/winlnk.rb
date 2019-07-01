@@ -64,6 +64,22 @@ class WinLnk
 
   # Returns the LinkFlags of the link.
   attr_reader :flags
+  # Returns the attributes of the link target.
+  attr_reader :attributes
+  # Returns the creation time of the link target.
+  attr_reader :btime
+  # Returns the access time of the link target.
+  attr_reader :atime
+  # Returns the write time of the link target.
+  attr_reader :mtime
+  # Returns the least significant 32 bits of the size of the link target.
+  attr_reader :file_size
+  # Returns the index of the icon within the given icon location.
+  attr_reader :icon_index
+  # Returns the expected window state of an application launched by the link.
+  attr_reader :show_cmd
+  # Returns the shortcut key to activate the application launched by the link.
+  attr_reader :hot_key
   # Returns the path pointed to by the link.
   attr_reader :path
   # Returns the description of the link.
