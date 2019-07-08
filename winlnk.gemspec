@@ -15,7 +15,12 @@ EOS
     "README",
     "Rakefile",
     "lib/winlnk.rb",
+    "test/local_cmd.lnk",
+    "test/local_win31j.lnk",
+    "test/net_win31j.lnk",
     "test/test_error.rb",
+    "test/test_internal.rb",
+    "test/test_specimen.rb",
   ]
   s.require_paths = ["lib"]
 
