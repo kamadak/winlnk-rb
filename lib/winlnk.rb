@@ -141,7 +141,7 @@ class WinLnk
     @atime = filetime2posixtime(times[3] << 32 | times[2])
     @mtime = filetime2posixtime(times[5] << 32 | times[4])
     @file_size, @icon_index, @show_cmd, @hot_key = data(0x34, 16).unpack("V3v")
-    reserved = data(0x44, 8).unpack("vV2")
+    _reserved = data(0x44, 8).unpack("vV2")
     return 0x4c
   end
 
@@ -169,7 +169,7 @@ class WinLnk
   def read_link_info(off)
     len, = data(off, 4).unpack("V")
     raise ParseError.new("Too short LinkInfo") if len < 0x1c
-    header_len, li_flags, vol_id_off, base_path_off,
+    header_len, li_flags, _vol_id_off, base_path_off,
       net_rel_link_off, suffix_off = data(off + 4, 24).unpack("V6")
     if @@debug
       printf("LinkInfo header size: %u\n", header_len)
