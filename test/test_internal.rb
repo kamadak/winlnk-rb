@@ -46,4 +46,40 @@ class TestInternal < Test::Unit::TestCase
     assert_equal(Time.utc(2014, 6, 21, 4, 36, 55),
                  lnk.send(:filetime2posixtime, 130477990150000000))
   end
+
+  def test_asciz
+    lnk = WinLnk.new("test/local_cmd.lnk", "US-ASCII")
+    asciz = ->(data, off) do
+      lnk.instance_variable_set(:@data, data)
+      return lnk.send(:asciz, off)
+    end
+
+    assert_equal("abc", asciz.call("abc\0def\0".b, 0))
+    assert_equal("bc", asciz.call("abc\0def\0".b, 1))
+    assert_equal("", asciz.call("abc\0def\0".b, 3))
+    assert_equal("def", asciz.call("abc\0def\0".b, 4))
+    assert_equal("", asciz.call("abc\0def\0".b, 7))
+    assert_raise(WinLnk::ParseError) { asciz.call("abc\0def\0".b, 8) }
+    assert_raise(WinLnk::ParseError) { asciz.call("".b, 1) }
+    assert_raise(WinLnk::ParseError) { asciz.call("abc".b, 0) }
+  end
+
+  def test_utf16z
+    lnk = WinLnk.new("test/local_cmd.lnk", "US-ASCII")
+    utf16z = ->(data, off) do
+      lnk.instance_variable_set(:@data, data)
+      return lnk.send(:utf16z, off)
+    end
+
+    assert_equal("ab", utf16z.call("a\0b\0\0\0c\0d\0\0\0".b, 0))
+    assert_equal("ab", utf16z.call("\0a\0b\0\0\0c\0d\0\0\0".b, 1))
+    assert_equal("cd", utf16z.call("a\0b\0\0\0c\0d\0\0\0".b, 6))
+    assert_equal("abc\0\0def".encode("UTF-8", "UTF-16LE"),
+                 utf16z.call("abc\0\0def\0\0".b, 0))
+    assert_equal("", utf16z.call("\0\0".b, 0))
+    assert_equal("a", utf16z.call("\n\0a\0\0\0".b, 2))
+    assert_raise(WinLnk::ParseError) { utf16z.call("\0", 0) }
+    assert_raise(WinLnk::ParseError) { utf16z.call("", 0) }
+    assert_raise(WinLnk::ParseError) { utf16z.call("", 1) }
+  end
 end

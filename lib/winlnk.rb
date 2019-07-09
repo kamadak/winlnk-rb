@@ -167,26 +167,41 @@ class WinLnk
   end
 
   def read_link_info(off)
-    len, = data(off, 4).unpack("V")
-    raise ParseError.new("Too short LinkInfo") if len < 0x1c
-    header_len, li_flags, _vol_id_off, base_path_off,
-      net_rel_link_off, suffix_off = data(off + 4, 24).unpack("V6")
+    len, header_len = data(off, 8).unpack("V2")
+    raise ParseError.new("Too short LinkInfo header") if header_len < 0x1c
+    (li_flags, _vol_id_off, base_path_off, net_rel_link_off, suffix_off,
+     base_path_unicode_off, suffix_unicode_off) =
+      data(off + 8, header_len - 8).unpack("V7")
     if @@debug
       printf("LinkInfo header size: %u\n", header_len)
       printf("LinkInfo flags: %b\n", li_flags)
     end
 
+    printf("Unicode LocalBasePath: %p\n", base_path_unicode_off) if @@debug
+    printf("Unicode Suffix: %p\n", suffix_unicode_off) if @@debug
+    suffix = suffix_unicode_off ?
+               utf16z(off + suffix_unicode_off) : asciz(off + suffix_off)
     if li_flags & LI_FLAG_LOCAL != 0
-      base_path, = data_all(off + base_path_off).unpack("Z*")
-      suffix, = data_all(off + suffix_off).unpack("Z*")
-      @path = (base_path + suffix).force_encoding(@codepage)
-    end
-    if li_flags & LI_FLAG_NETWORK != 0
+      base_path = base_path_unicode_off ?
+                    utf16z(off + base_path_unicode_off) :
+                    asciz(off + base_path_off)
+      make_encodings_be_compatible(base_path, suffix)
+      @path = base_path << suffix
+    elsif li_flags & LI_FLAG_NETWORK != 0
       # Parse the CommonNetworkRelativeLink structure.
-      net_name_off, = data(off + net_rel_link_off + 8, 2).unpack("v")
-      net_name, = data_all(off + net_rel_link_off + net_name_off).unpack("Z*")
-      suffix, = data_all(off + suffix_off).unpack("Z*")
-      @path = (net_name + "\\" + suffix).force_encoding(@codepage)
+      net_name_off, = data(off + net_rel_link_off + 8, 4).unpack("V")
+      (_common_net_rel_link_size, _common_net_rel_link_flags,
+       net_name_off, _dev_name_off, _net_provider_type,
+       net_name_unicode_off, _dev_name_unicode_off) =
+        data(off + net_rel_link_off, net_name_off).unpack("V7")
+      printf("Unicode NetName: %p\n", net_name_unicode_off) if @@debug
+      net_name = net_name_unicode_off ?
+                   utf16z(off + net_rel_link_off + net_name_unicode_off) :
+                   asciz(off + net_rel_link_off + net_name_off)
+      make_encodings_be_compatible(net_name, suffix)
+      @path = net_name << "\\" << suffix
+    else
+      raise ParseError.new("Unknown LinkInfoFlags")
     end
     return off + len
   end
@@ -203,14 +218,35 @@ class WinLnk
     end
   end
 
+  def asciz(off)
+    # Check if "@#{off}" does not go out of the string.
+    raise ParseError.new("Truncated file") if @data.size < off
+    str = @data.unpack("@#{off} Z*")[0]
+    # Check if the terminating null character existed.
+    raise ParseError.new("Truncated file") if @data.size - off <= str.bytesize
+    return str.force_encoding(@codepage)
+  end
+
+  def utf16z(off)
+    zz = off
+    while @data.size >= zz + 2
+      if @data.getbyte(zz) == 0 && @data.getbyte(zz + 1) == 0
+        return @data[off...zz].encode!("UTF-8", "UTF-16LE")
+      end
+      zz += 2
+    end
+    raise ParseError.new("Truncated file")
+  end
+
   def data(off, len)
     raise ParseError.new("Truncated file") if @data.size < off + len
     return @data[off, len]
   end
 
-  def data_all(off)
-    raise ParseError.new("Truncated file") if @data.size < off
-    return @data[off..-1]
+  def make_encodings_be_compatible(a, b)
+    return if Encoding::compatible?(a, b)
+    a.encode!("UTF-8")
+    b.encode!("UTF-8")
   end
 
   # This exception is raised when failed to parse a link.

@@ -70,6 +70,26 @@ class TestSpecimen < Test::Unit::TestCase
     assert_equal(0, lnk.hot_key)
   end
 
+  def test_local_unicode
+    lnk = WinLnk.new("test/local_unicode.lnk", "Windows-31J")
+
+    assert_equal('C:\Temp\💎.txt', lnk.path)
+    assert_equal(nil, lnk.description)
+    assert_equal('.\💎.txt', lnk.relative_path)
+    assert_equal('C:\Temp', lnk.working_directory)
+    assert_equal(nil, lnk.arguments)
+    assert_equal(nil, lnk.icon_location)
+
+    assert_equal(0x2020, lnk.attributes)
+    assert_equal(Time.utc(2019,  7,  8, 14,  5, 42, 626696), lnk.btime)
+    assert_equal(Time.utc(2019,  7,  8, 14,  5, 42, 626696), lnk.atime)
+    assert_equal(Time.utc(2019,  7,  8, 14,  5, 42, 626696), lnk.mtime)
+    assert_equal(0, lnk.file_size)
+    assert_equal(0, lnk.icon_index)
+    assert_equal(WinLnk::SW_SHOWNORMAL, lnk.show_cmd)
+    assert_equal(0, lnk.hot_key)
+  end
+
   def test_net_win31j
     lnk = WinLnk.new("test/net_win31j.lnk", "Windows-31J")
 
@@ -85,6 +105,48 @@ class TestSpecimen < Test::Unit::TestCase
     assert_equal(0x80, lnk.attributes)
     assert_equal(Time.utc(2019,  7,  8, 14,  4, 50,  25776), lnk.btime)
     assert_equal(Time.utc(2019,  7,  8, 14,  5, 30, 183680), lnk.atime)
+    assert_equal(Time.utc(2019,  7,  8, 14,  4, 50,  25776), lnk.mtime)
+    assert_equal(10, lnk.file_size)
+    assert_equal(0, lnk.icon_index)
+    assert_equal(WinLnk::SW_SHOWNORMAL, lnk.show_cmd)
+    assert_equal(0, lnk.hot_key)
+  end
+
+  # Unicode in Suffix.
+  def test_net_unicode
+    lnk = WinLnk.new("test/net_unicode.lnk", "Windows-31J")
+
+    assert_equal('\\\\TEST\SHARE\💎.txt', lnk.path)
+    assert_equal(nil, lnk.description)
+    assert_equal(nil, lnk.relative_path)
+    assert_equal('\\\\test\share', lnk.working_directory)
+    assert_equal(nil, lnk.arguments)
+    assert_equal(nil, lnk.icon_location)
+
+    assert_equal(0x80, lnk.attributes)
+    assert_equal(Time.utc(2019,  7,  8, 14,  5, 42, 626696), lnk.btime)
+    assert_equal(Time.utc(2019,  7,  8, 14,  6, 30, 215037), lnk.atime)
+    assert_equal(Time.utc(2019,  7,  8, 14,  5, 42, 626696), lnk.mtime)
+    assert_equal(0, lnk.file_size)
+    assert_equal(0, lnk.icon_index)
+    assert_equal(WinLnk::SW_SHOWNORMAL, lnk.show_cmd)
+    assert_equal(0, lnk.hot_key)
+  end
+
+  # Unicode in NetName.
+  def test_net_unicode2
+    lnk = WinLnk.new("test/net_unicode2.lnk", "Windows-31J")
+
+    assert_equal('\\\\TEST\📂\リンク先.txt', lnk.path)
+    assert_equal(nil, lnk.description)
+    assert_equal(nil, lnk.relative_path)
+    assert_equal('\\\\test\📂', lnk.working_directory)
+    assert_equal(nil, lnk.arguments)
+    assert_equal(nil, lnk.icon_location)
+
+    assert_equal(0x80, lnk.attributes)
+    assert_equal(Time.utc(2019,  7,  8, 14,  4, 50,  25776), lnk.btime)
+    assert_equal(Time.utc(2019,  7,  9, 13, 31,  7, 978921), lnk.atime)
     assert_equal(Time.utc(2019,  7,  8, 14,  4, 50,  25776), lnk.mtime)
     assert_equal(10, lnk.file_size)
     assert_equal(0, lnk.icon_index)
