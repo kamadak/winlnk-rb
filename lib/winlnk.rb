@@ -29,6 +29,7 @@
 class WinLnk
   MAGIC = "\x4c\x00\x00\x00".b
   CLSID = "\x01\x14\x02\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x46".b
+  private_constant :MAGIC, :CLSID
 
   FLAG_HAS_LINK_TARGET_ID_LIST = 1 << 0
   FLAG_HAS_LINK_INFO = 1 << 1
