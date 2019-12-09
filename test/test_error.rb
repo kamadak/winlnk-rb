@@ -39,4 +39,11 @@ class TestError < Test::Unit::TestCase
       WinLnk.new("test/test_error.rb", "US-ASCII")
     end
   end
+
+  def test_no_popen
+    # Pipes should not be opened.
+    assert_raise(Errno::ENOENT) do
+      WinLnk.new("|echo Hello", "US-ASCII")
+    end
+  end
 end

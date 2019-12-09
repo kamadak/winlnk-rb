@@ -100,7 +100,10 @@ class WinLnk
   # to be +codepage+.
   def initialize(pathname, codepage)
     @codepage = codepage
-    @data = open(pathname, "rb:ASCII-8BIT") { |f| f.read }
+    # Do not use Kernel.#open or File.read, which is actually IO.read,
+    # because they can open pipes.  File.read was fixed to not open pipes
+    # in Ruby 2.6.
+    @data = File.open(pathname, mode: "rb:ASCII-8BIT") { |f| f.read }
     off = read_header()
     printf("Link flags: %b\n", @flags) if @@debug
 
