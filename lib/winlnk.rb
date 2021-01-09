@@ -144,8 +144,8 @@ class WinLnk
     @btime = filetime2posixtime(times[1] << 32 | times[0])
     @atime = filetime2posixtime(times[3] << 32 | times[2])
     @mtime = filetime2posixtime(times[5] << 32 | times[4])
-    @file_size, @icon_index, @show_cmd, @hot_key = data(0x34, 16).unpack("V3v")
-    _reserved = data(0x44, 8).unpack("vV2")
+    @file_size, @icon_index, @show_cmd, @hot_key = data(0x34, 14).unpack("V3v")
+    _reserved = data(0x42, 10).unpack("vV2")
     return 0x4c
   end
 
