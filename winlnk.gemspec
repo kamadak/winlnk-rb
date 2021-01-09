@@ -15,6 +15,7 @@ EOS
     "README",
     "Rakefile",
     "lib/winlnk.rb",
+    "sig/winlnk.rbs",
     "test/local_cmd.lnk",
     "test/local_win31j.lnk",
     "test/local_unicode.lnk",

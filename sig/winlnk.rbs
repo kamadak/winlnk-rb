@@ -1,0 +1,65 @@
+class WinLnk
+  MAGIC: String
+  CLSID: String
+  FLAG_HAS_LINK_TARGET_ID_LIST: Integer
+  FLAG_HAS_LINK_INFO: Integer
+  FLAG_HAS_NAME: Integer
+  FLAG_HAS_RELATIVE_PATH: Integer
+  FLAG_HAS_WORKING_DIR: Integer
+  FLAG_HAS_ARGUMENTS: Integer
+  FLAG_HAS_ICON_LOCATION: Integer
+  FLAG_IS_UNICODE: Integer
+  ATTR_READONLY: Integer
+  ATTR_HIDDEN: Integer
+  ATTR_SYSTEM: Integer
+  ATTR_DIRECTORY: Integer
+  ATTR_ARCHIVE: Integer
+  ATTR_NORMAL: Integer
+  ATTR_TEMPORARY: Integer
+  ATTR_SPARSE_FILE: Integer
+  ATTR_REPARSE_POINT: Integer
+  ATTR_COMPRESSED: Integer
+  ATTR_OFFLINE: Integer
+  ATTR_NOT_CONTENT_INDEXED: Integer
+  ATTR_ENCRYPTED: Integer
+  SW_SHOWNORMAL: Integer
+  SW_SHOWMAXIMIZED: Integer
+  SW_SHOWMINNOACTIVE: Integer
+  LI_FLAG_LOCAL: Integer
+  LI_FLAG_NETWORK: Integer
+  @codepage: String
+  @data: String
+  @id_list: Array[String]
+  @@debug: (nil | bool)
+
+  attr_reader flags: Integer
+  attr_reader attributes: Integer
+  attr_reader btime: Time?
+  attr_reader atime: Time?
+  attr_reader mtime: Time?
+  attr_reader file_size: Integer
+  attr_reader icon_index: Integer
+  attr_reader show_cmd: Integer
+  attr_reader hot_key: Integer
+  attr_reader path: String
+  attr_reader description: String?
+  attr_reader relative_path: String?
+  attr_reader working_directory: String?
+  attr_reader arguments: String?
+  attr_reader icon_location: String?
+  def initialize: (String pathname, String codepage) -> void
+
+  private
+  def read_header: -> Integer
+  def filetime2posixtime: (Integer filetime) -> Time?
+  def read_id_list: (Integer off) -> Integer
+  def read_link_info: (Integer off) -> Integer
+  def read_string: (Integer off) -> [String, Integer]
+  def asciz: (Integer off) -> String
+  def utf16z: (Integer off) -> String
+  def data: (Integer off, Integer len) -> String
+  def make_encodings_be_compatible: (String a, String b) -> void
+
+  class ParseError < StandardError
+  end
+end
