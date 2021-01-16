@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "winlnk"
-  s.version = "0.0.3"
+  s.version = "0.0.4"
   s.authors = ["KAMADA Ken'ichi"]
   s.email = "kamada@nanohz.org"
   s.homepage = "https://github.com/kamadak/winlnk-rb"
